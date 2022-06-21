@@ -1,0 +1,59 @@
+version: "3.7"
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    container_name: elasticsearch
+    hostname: elasticsearch
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.10.2
+    container_name: kibana
+    hostname: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      SERVERNAME: kibana
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server-oss:7.12.0
+    volumes:
+      - ./elastic-apm/apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
+    container_name: apm-server
+    hostname: apm-server
+    ports:
+      - "8200:8200"
+    environment:
+      - output.elasticsearch.hosts=http://elasticsearch:9200
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:7.12.0
+    container_name: logstash
+    links:
+      - elasticsearch
+    volumes:
+      - ./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - $PROJ_PATH/target/data/log:/usr/share/logstash/proj_log
+    ports:
+      - "5044:5044"
+
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat-oss:7.12.0
+  #   container_name: filebeat
+  #   links:
+  #     - logstash
+  #     # - elasticsearch
+  #   volumes:
+  #     - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+  #     - $PROJ_PATH/target/data/log:/usr/share/filebeat/proj_log:ro
+
+volumes:
+  esdata:

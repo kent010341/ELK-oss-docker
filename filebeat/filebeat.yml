@@ -1,0 +1,11 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /usr/share/filebeat/proj_log/karaf*.log
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+# output.elasticsearch:
+#   hosts: ["http://elasticsearch:9200"]
